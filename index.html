@@ -1,0 +1,551 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MILLIONAIRE | Virtual Trading</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#090d12;color:#eef3f8;font-family:Arial,sans-serif}
+button,input{font:inherit}
+button{cursor:pointer;border:0;border-radius:9px;padding:11px 16px;background:#16a36a;color:white;font-weight:bold}
+button:hover{filter:brightness(1.15)}
+input{background:#111923;color:white;border:1px solid #273442;padding:12px;border-radius:9px;width:100%;outline:none}
+.muted{color:#8291a1;font-size:13px}
+.green{color:#26d995}.red{color:#ff6675}
+.card{background:#111923;border:1px solid #202d3b;border-radius:14px;padding:18px}
+h1,h2,h3,p{margin-top:0}
+.auth{min-height:100vh;display:grid;place-items:center;padding:20px}
+.authbox{width:100%;max-width:410px;background:#111923;border:1px solid #293746;padding:30px;border-radius:18px}
+.logo{font-size:25px;font-weight:900;letter-spacing:2px;color:#24d995}
+.authbox input{margin:8px 0 14px}
+.authbox button{width:100%;margin-top:8px}
+a{color:#25d995;cursor:pointer}
+#app{display:none}
+header{height:70px;padding:0 5%;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #25313d;background:#0d141d;position:sticky;top:0;z-index:5}
+.layout{display:flex;min-height:calc(100vh - 70px)}
+aside{width:220px;padding:22px 14px;border-right:1px solid #25313d;background:#0d141d}
+nav button{display:block;width:100%;text-align:left;background:transparent;color:#a9b7c5;margin:5px 0}
+nav button.active,nav button:hover{background:#1a2b30;color:#27db9a}
+main{padding:28px;width:100%;max-width:1500px;margin:auto}
+.page{display:none}.page.active{display:block}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:20px 0}
+.stat{font-size:25px;font-weight:bold;margin:12px 0}
+table{width:100%;border-collapse:collapse;text-align:left}
+th,td{padding:15px 10px;border-bottom:1px solid #263341;font-size:14px}
+th{color:#8291a1;font-size:12px}
+.actions{display:flex;gap:7px;flex-wrap:wrap}
+.secondary{background:#243341;color:#e8f1f8}
+.danger{background:#a73545}
+.row{display:flex;gap:15px;align-items:center;flex-wrap:wrap}
+.row>*{flex:1}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.stock-symbol{font-weight:bold}
+.big{font-size:32px;font-weight:bold}
+form{display:grid;gap:12px}
+.notice{padding:12px;background:#182b28;border-radius:9px;color:#8de7bd;font-size:13px}
+#toast{position:fixed;bottom:20px;right:20px;background:#243b35;padding:15px 20px;border-radius:10px;display:none;z-index:20}
+@media(max-width:850px){
+ .layout{display:block}
+ aside{width:100%;padding:8px;overflow:auto}
+ nav{display:flex;width:max-content}
+ nav button{width:auto}
+ .stats{grid-template-columns:1fr 1fr}
+ main{padding:15px}
+ .grid2{grid-template-columns:1fr}
+}
+@media(max-width:480px){
+ .stats{grid-template-columns:1fr 1fr}
+ table{min-width:570px}
+ .tablewrap{overflow-x:auto}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN / SIGNUP -->
+<section class="auth" id="auth">
+<div class="authbox">
+<div class="logo">MILLIONAIRE.</div>
+<p class="muted">YOUR VIRTUAL INVESTING EXPERIENCE</p>
+
+<div id="loginForm">
+<h2>Welcome back.</h2>
+<p class="muted">Log in to your trading account.</p>
+<label>Username</label>
+<input id="loginUser" placeholder="Your username" autocomplete="username">
+<label>Password</label>
+<input id="loginPass" type="password" placeholder="Your password" autocomplete="current-password">
+<button onclick="login()">LOG IN</button>
+<p class="muted" style="margin-top:20px">New here? <a onclick="showSignup()">Create account</a></p>
+</div>
+
+<div id="signupForm" style="display:none">
+<h2>Create account.</h2>
+<p class="muted">Start with $100,000 virtual cash.</p>
+<label>Username</label>
+<input id="newUser" placeholder="Choose a username" maxlength="18">
+<label>Password</label>
+<input id="newPass" type="password" placeholder="Choose a password">
+<label>Confirm password</label>
+<input id="confirmPass" type="password" placeholder="Repeat password">
+<button onclick="signup()">CREATE ACCOUNT</button>
+<p class="muted" style="margin-top:20px">Already registered? <a onclick="showLogin()">Log in</a></p>
+</div>
+<p class="muted" style="margin-top:25px">Simulation only. No real money involved.</p>
+</div>
+</section>
+
+<!-- MAIN APP -->
+<div id="app">
+<header>
+<div class="logo">MILLIONAIRE.</div>
+<div class="row" style="flex:0;gap:12px">
+<span id="headerUser" class="muted"></span>
+<button class="secondary" onclick="logout()">LOG OUT</button>
+</div>
+</header>
+
+<div class="layout">
+<aside>
+<nav>
+<button class="active" onclick="go('dashboard',this)">◈ Dashboard</button>
+<button onclick="go('markets',this)">▤ Markets</button>
+<button onclick="go('portfolio',this)">◫ Portfolio</button>
+<button onclick="go('wallet',this)">⇄ Transfer money</button>
+<button onclick="go('watchlist',this)">☆ Watchlist</button>
+<button onclick="go('history',this)">◷ Transactions</button>
+<button onclick="go('leaderboard',this)">♛ Leaderboard</button>
+<button onclick="go('profile',this)">⚙ Profile</button>
+</nav>
+</aside>
+
+<main>
+<!-- DASHBOARD -->
+<section class="page active" id="dashboard">
+<h1>Good to see you, <span id="welcome"></span>.</h1>
+<p class="muted">Here's your virtual investment overview.</p>
+
+<div class="stats">
+<div class="card"><span class="muted">Total portfolio value</span><div class="stat" id="totalValue">$100,000</div><span class="muted">Cash + investments</span></div>
+<div class="card"><span class="muted">Available cash</span><div class="stat" id="cashValue">$100,000</div><span class="muted">Ready to invest</span></div>
+<div class="card"><span class="muted">Total profit/loss</span><div class="stat green" id="profitValue">$0</div><span class="muted">Compared with starting capital and transfers</span></div>
+<div class="card"><span class="muted">Investments</span><div class="stat" id="investmentCount">0</div><span class="muted">Different assets held</span></div>
+</div>
+
+<div class="grid2">
+<div class="card">
+<h3>Market overview</h3>
+<div id="marketPreview"></div>
+</div>
+<div class="card">
+<h3>Recent activity</h3>
+<div id="recentActivity" class="muted">No activity yet.</div>
+</div>
+</div>
+</section>
+
+<!-- MARKETS -->
+<section class="page" id="markets">
+<h1>Markets</h1>
+<p class="muted">Explore simulated stocks and prices.</p>
+<input id="search" placeholder="Search companies or symbols..." oninput="renderMarkets()">
+<div class="card tablewrap" style="margin-top:15px">
+<table><thead><tr><th>ASSET</th><th>PRICE</th><th>24H CHANGE</th><th>ACTION</th></tr></thead>
+<tbody id="marketRows"></tbody></table>
+</div>
+</section>
+
+<!-- PORTFOLIO -->
+<section class="page" id="portfolio">
+<h1>Your portfolio</h1>
+<p class="muted">Your current virtual investments.</p>
+<div class="card tablewrap">
+<table><thead><tr><th>ASSET</th><th>SHARES</th><th>AVG. PRICE</th><th>VALUE</th><th>PROFIT/LOSS</th><th>ACTION</th></tr></thead>
+<tbody id="portfolioRows"></tbody></table>
+</div>
+</section>
+
+<!-- TRANSFERS -->
+<section class="page" id="wallet">
+<h1>Virtual wallet</h1>
+<p class="muted">Send and receive simulated money between accounts.</p>
+<div class="stats">
+<div class="card"><span class="muted">Your balance</span><div class="stat" id="walletBalance">$100,000</div></div>
+<div class="card"><span class="muted">Total sent</span><div class="stat" id="sentTotal">$0</div></div>
+<div class="card"><span class="muted">Total received</span><div class="stat" id="receivedTotal">$0</div></div>
+<div class="card"><span class="muted">Username</span><div class="stat" id="walletUsername">@user</div></div>
+</div>
+
+<div class="grid2">
+<div class="card">
+<h3>⇧ Send money</h3>
+<p class="muted">Transfer virtual cash to another registered username.</p>
+<form onsubmit="sendMoney(event)">
+<label>Recipient username</label>
+<input id="recipient" placeholder="@username" required>
+<label>Amount (USD)</label>
+<input id="sendAmount" type="number" min="0.01" step="0.01" placeholder="100" required>
+<label>Note (optional)</label>
+<input id="sendNote" maxlength="80" placeholder="What's this for?">
+<button type="submit">SEND MONEY</button>
+</form>
+</div>
+
+<div class="card">
+<h3>⇩ Receive money</h3>
+<p class="muted">Share your username with someone who wants to send you money.</p>
+<div class="notice">Your username: <strong id="shareUsername">@user</strong></div>
+<p class="muted" style="margin-top:15px">Ask the sender to find your exact username in their wallet.</p>
+</div>
+</div>
+</section>
+
+<!-- WATCHLIST -->
+<section class="page" id="watchlist">
+<h1>Your watchlist ☆</h1>
+<p class="muted">Keep an eye on your favourite stocks.</p>
+<div class="card tablewrap">
+<table><thead><tr><th>ASSET</th><th>PRICE</th><th>CHANGE</th><th>ACTION</th></tr></thead>
+<tbody id="watchRows"></tbody></table>
+</div>
+</section>
+
+<!-- HISTORY -->
+<section class="page" id="history">
+<h1>Transaction history</h1>
+<p class="muted">All purchases, sales and transfers.</p>
+<div class="card tablewrap">
+<table><thead><tr><th>TYPE</th><th>DETAILS</th><th>AMOUNT</th><th>DATE</th></tr></thead>
+<tbody id="historyRows"></tbody></table>
+</div>
+</section>
+
+<!-- LEADERBOARD -->
+<section class="page" id="leaderboard">
+<h1>Leaderboard ♛</h1>
+<p class="muted">Compare virtual wealth with accounts on this browser.</p>
+<div class="card tablewrap">
+<table><thead><tr><th>RANK</th><th>PLAYER</th><th>PORTFOLIO VALUE</th></tr></thead>
+<tbody id="leaderRows"></tbody></table>
+</div>
+</section>
+
+<!-- PROFILE -->
+<section class="page" id="profile">
+<h1>Account settings</h1>
+<div class="card">
+<h3>Your profile</h3>
+<p>Username: <strong id="profileUsername"></strong></p>
+<p>Account type: Virtual investor</p>
+<p>Starting balance: $100,000</p>
+<button class="danger" onclick="logout()">Log out</button>
+</div>
+<div class="card" style="margin-top:15px">
+<h3>Important information</h3>
+<p class="muted">This is a browser-based educational simulation. It does not connect to a stock exchange or payment network. Account information is stored locally and is not protected like a real financial service.</p>
+</div>
+</section>
+
+</main>
+</div>
+</div>
+<div id="toast"></div>
+
+<script>
+// SIMULATED MARKET DATA
+const stocks=[
+{symbol:"AAPL",name:"Apple",price:225},
+{symbol:"MSFT",name:"Microsoft",price:510},
+{symbol:"NVDA",name:"NVIDIA",price:185},
+{symbol:"TSLA",name:"Tesla",price:340},
+{symbol:"AMZN",name:"Amazon",price:225},
+{symbol:"GOOGL",name:"Alphabet",price:195},
+{symbol:"META",name:"Meta",price:670},
+{symbol:"NFLX",name:"Netflix",price:1150},
+{symbol:"AMD",name:"AMD",price:205},
+{symbol:"DIS",name:"Disney",price:110},
+{symbol:"KO",name:"Coca-Cola",price:70},
+{symbol:"JPM",name:"JPMorgan",price:300}
+];
+
+let current=null;
+let prices={};
+let changes={};
+stocks.forEach(s=>{prices[s.symbol]=s.price;changes[s.symbol]=0});
+
+const money=n=>"$"+Number(n).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
+const getUsers=()=>JSON.parse(localStorage.getItem("millionaire_users")||"{}");
+const saveUsers=u=>localStorage.setItem("millionaire_users",JSON.stringify(u));
+const user=()=>getUsers()[current];
+
+function updateUser(data){
+ let users=getUsers();
+ users[current]=data;
+ saveUsers(users);
+}
+
+function showLogin(){
+ loginForm.style.display="block";
+ signupForm.style.display="none";
+}
+function showSignup(){
+ loginForm.style.display="none";
+ signupForm.style.display="block";
+}
+
+function signup(){
+ let username=newUser.value.trim().toLowerCase();
+ let password=newPass.value;
+ if(!/^[a-z0-9_]{3,18}$/.test(username))return toast("Username: 3-18 letters, numbers or underscores.");
+ if(password.length<6)return toast("Password must be at least 6 characters.");
+ if(password!==confirmPass.value)return toast("Passwords do not match.");
+ let users=getUsers();
+ if(users[username])return toast("Username already exists.");
+ users[username]={
+  password,
+  cash:100000,
+  starting:100000,
+  holdings:{},
+  watchlist:[],
+  history:[],
+  sent:0,
+  received:0
+ };
+ saveUsers(users);
+ current=username;
+ enterApp();
+ toast("Account created! Welcome.");
+}
+
+function login(){
+ let username=loginUser.value.trim().toLowerCase();
+ let password=loginPass.value;
+ let u=getUsers()[username];
+ if(!u||u.password!==password)return toast("Incorrect username or password.");
+ current=username;
+ enterApp();
+}
+
+function logout(){
+ current=null;
+ app.style.display="none";
+ auth.style.display="grid";
+ showLogin();
+}
+
+function enterApp(){
+ auth.style.display="none";
+ app.style.display="block";
+ headerUser.textContent="@"+current;
+ welcome.textContent=current;
+ renderAll();
+}
+
+function toast(message){
+ let el=document.getElementById("toast");
+ el.textContent=message;
+ el.style.display="block";
+ clearTimeout(window.toastTimer);
+ window.toastTimer=setTimeout(()=>el.style.display="none",3000);
+}
+
+function go(page,btn){
+ document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+ document.getElementById(page).classList.add("active");
+ document.querySelectorAll("nav button").forEach(b=>b.classList.remove("active"));
+ btn.classList.add("active");
+ renderAll();
+}
+
+function portfolioValue(u){
+ return Object.entries(u.holdings).reduce((sum,[symbol,h])=>sum+prices[symbol]*h.shares,0);
+}
+function totalValue(u){return u.cash+portfolioValue(u)}
+
+function record(type,details,amount){
+ let u=user();
+ u.history.unshift({type,details,amount,date:new Date().toLocaleString()});
+ u.history=u.history.slice(0,200);
+ updateUser(u);
+}
+
+function renderAll(){
+ if(!current||!user())return;
+ let u=user();
+ let invested=portfolioValue(u);
+ let total=u.cash+invested;
+ let pnl=total-u.starting;
+ totalValueEl.textContent=money(total);
+ cashValue.textContent=money(u.cash);
+ profitValue.textContent=money(pnl);
+ profitValue.className="stat "+(pnl>=0?"green":"red");
+ investmentCount.textContent=Object.keys(u.holdings).length;
+ walletBalance.textContent=money(u.cash);
+ walletUsername.textContent="@"+current;
+ shareUsername.textContent="@"+current;
+ sentTotal.textContent=money(u.sent);
+ receivedTotal.textContent=money(u.received);
+ profileUsername.textContent="@"+current;
+ renderMarkets();
+ renderPortfolio();
+ renderWatchlist();
+ renderHistory();
+ renderLeaderboard();
+ renderPreview();
+ renderRecent();
+}
+const totalValueEl=document.getElementById("totalValue");
+
+function renderMarkets(){
+ let term=(document.getElementById("search")?.value||"").toLowerCase();
+ marketRows.innerHTML=stocks.filter(s=>(s.name+s.symbol).toLowerCase().includes(term)).map(s=>`
+ <tr>
+ <td><b>${s.name}</b><br><span class="muted">${s.symbol}</span></td>
+ <td>${money(prices[s.symbol])}</td>
+ <td class="${changes[s.symbol]>=0?"green":"red"}">${changes[s.symbol]>=0?"+":""}${changes[s.symbol].toFixed(2)}%</td>
+ <td><div class="actions"><button onclick="buy('${s.symbol}')">Buy</button><button class="secondary" onclick="toggleWatch('${s.symbol}')">☆</button></div></td>
+ </tr>`).join("");
+}
+
+function buy(symbol){
+ let amount=Number(prompt("How many shares of "+symbol+" would you like to buy?"));
+ if(!Number.isFinite(amount)||amount<=0)return;
+ let u=user(),cost=amount*prices[symbol];
+ if(cost>u.cash)return toast("Not enough virtual cash.");
+ let h=u.holdings[symbol]||{shares:0,avg:0};
+ h.avg=(h.avg*h.shares+cost)/(h.shares+amount);
+ h.shares+=amount;
+ u.holdings[symbol]=h;
+ u.cash-=cost;
+ updateUser(u);
+ record("BUY",amount+" shares of "+symbol,-cost);
+ renderAll();
+ toast("Purchase completed!");
+}
+
+function sell(symbol){
+ let u=user(),h=u.holdings[symbol];
+ if(!h)return;
+ let amount=Number(prompt("How many shares would you like to sell? You own "+h.shares));
+ if(!Number.isFinite(amount)||amount<=0)return;
+ if(amount>h.shares)return toast("You don't own that many shares.");
+ let revenue=amount*prices[symbol];
+ h.shares-=amount;
+ u.cash+=revenue;
+ if(h.shares<0.0000001)delete u.holdings[symbol];
+ updateUser(u);
+ record("SELL",amount+" shares of "+symbol,revenue);
+ renderAll();
+ toast("Shares sold!");
+}
+
+function renderPortfolio(){
+ let holdings=Object.entries(user().holdings);
+ portfolioRows.innerHTML=holdings.length?holdings.map(([s,h])=>{
+ let value=prices[s]*h.shares;
+ let pl=value-h.avg*h.shares;
+ return `<tr><td><b>${s}</b></td><td>${h.shares.toFixed(4)}</td><td>${money(h.avg)}</td><td>${money(value)}</td><td class="${pl>=0?"green":"red"}">${money(pl)}</td><td><button onclick="sell('${s}')">Sell</button></td></tr>`;
+ }).join(""):`<tr><td colspan="6">No investments yet.</td></tr>`;
+}
+
+function toggleWatch(symbol){
+ let u=user();
+ if(u.watchlist.includes(symbol))u.watchlist=u.watchlist.filter(x=>x!==symbol);
+ else u.watchlist.push(symbol);
+ updateUser(u);
+ renderAll();
+ toast("Watchlist updated.");
+}
+
+function renderWatchlist(){
+ watchRows.innerHTML=user().watchlist.length?user().watchlist.map(s=>`
+ <tr><td><b>${s}</b></td><td>${money(prices[s])}</td>
+ <td class="${changes[s]>=0?"green":"red"}">${changes[s].toFixed(2)}%</td>
+ <td><button class="danger" onclick="toggleWatch('${s}')">Remove</button></td></tr>
+ `).join(""):`<tr><td colspan="4">Your watchlist is empty.</td></tr>`;
+}
+
+function sendMoney(e){
+ e.preventDefault();
+ let recipient=document.getElementById("recipient").value.trim().replace(/^@/,"").toLowerCase();
+ let amount=Number(sendAmount.value);
+ let note=sendNote.value.trim();
+ let users=getUsers();
+ if(!users[recipient])return toast("Recipient account not found on this browser.");
+ if(recipient===current)return toast("You cannot send money to yourself.");
+ if(!Number.isFinite(amount)||amount<=0)return toast("Enter a valid amount.");
+ let sender=users[current],receiver=users[recipient];
+ if(amount>sender.cash)return toast("Insufficient virtual cash.");
+ if(!confirm("Send "+money(amount)+" to @"+recipient+"?"))return;
+
+ sender.cash-=amount;
+ sender.sent+=amount;
+ receiver.cash+=amount;
+ receiver.received+=amount;
+ sender.history.unshift({type:"SENT",details:"To @"+recipient+(note?" — "+note:""),amount:-amount,date:new Date().toLocaleString()});
+ receiver.history.unshift({type:"RECEIVED",details:"From @"+current+(note?" — "+note:""),amount:amount,date:new Date().toLocaleString()});
+ sender.history=sender.history.slice(0,200);
+ receiver.history=receiver.history.slice(0,200);
+ users[current]=sender;
+ users[recipient]=receiver;
+ saveUsers(users);
+ recipientInputClear();
+ renderAll();
+ toast("Virtual money sent successfully!");
+}
+function recipientInputClear(){
+ document.getElementById("recipient").value="";
+ document.getElementById("sendAmount").value="";
+ document.getElementById("sendNote").value="";
+}
+
+function renderHistory(){
+ historyRows.innerHTML=user().history.length?user().history.map(t=>`
+ <tr><td>${t.type}</td><td>${t.details}</td><td class="${t.amount>=0?"green":"red"}">${money(t.amount)}</td><td class="muted">${t.date}</td></tr>
+ `).join(""):`<tr><td colspan="4">No transactions yet.</td></tr>`;
+}
+
+function renderLeaderboard(){
+ let users=Object.entries(getUsers()).map(([name,u])=>({
+ name,value:u.cash+Object.entries(u.holdings).reduce((sum,[s,h])=>sum+(prices[s]||0)*h.shares,0)
+ })).sort((a,b)=>b.value-a.value);
+ leaderRows.innerHTML=users.map((u,i)=>`
+ <tr><td>#${i+1}</td><td>${u.name===current?"You (@"+u.name+")":"@"+u.name}</td><td>${money(u.value)}</td></tr>
+ `).join("");
+}
+
+function renderPreview(){
+ marketPreview.innerHTML=stocks.slice(0,5).map(s=>`
+ <div class="row" style="padding:10px 0;border-bottom:1px solid #263341">
+ <div><b>${s.symbol}</b><div class="muted">${s.name}</div></div>
+ <div style="text-align:right"><b>${money(prices[s.symbol])}</b><div class="${changes[s.symbol]>=0?"green":"red"}">${changes[s.symbol].toFixed(2)}%</div></div>
+ </div>`).join("");
+}
+
+function renderRecent(){
+ let h=user().history.slice(0,5);
+ recentActivity.innerHTML=h.length?h.map(t=>`<p>${t.type}: ${t.details}<br><span class="muted">${t.date}</span></p>`).join(""):"No activity yet.";
+}
+
+// SIMULATED MARKET MOVEMENT
+setInterval(()=>{
+ stocks.forEach(s=>{
+ let old=prices[s.symbol];
+ let movement=(Math.random()-.5)*0.018;
+ prices[s.symbol]=Math.max(.01,old*(1+movement));
+ changes[s.symbol]=((prices[s.symbol]/s.price)-1)*100;
+ });
+ if(current&&app.style.display!=="none")renderAll();
+},3000);
+
+// AUTO LOGIN FOR THIS BROWSER
+let savedSession=localStorage.getItem("millionaire_session");
+if(savedSession&&getUsers()[savedSession]){
+ current=savedSession;
+ enterApp();
+}
+</script>
+</body>
+</html>
